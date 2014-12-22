@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	zmq "github.com/pebbe/zmq4"
+	"time"
 )
 
 const (
@@ -11,8 +12,9 @@ const (
 	monPort = "5556"
 )
 
-func Monitor(state zmq.State) {
+func Monitor(state zmq.State) error {
 	fmt.Println("State: ", state)
+	return nil
 }
 
 func main() {
@@ -33,12 +35,12 @@ func main() {
 	}
 	defer mon.Close()
 
-	url := fmt.Sprintf("tcp://*:%s", monPort)
+	url = fmt.Sprintf("tcp://*:%s", monPort)
 	if err := mon.Bind(url); err != nil {
 		panic(err)
 	}
 
-	monitor = zmq.Reactor()
+	monitor := zmq.NewReactor()
 	monitor.AddSocket(mon, zmq.POLLIN, Monitor)
 	monitor.Run(time.Second)
 
