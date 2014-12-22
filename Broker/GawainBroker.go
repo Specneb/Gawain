@@ -42,7 +42,7 @@ func main() {
 
 	monitor := zmq.NewReactor()
 	monitor.AddSocket(mon, zmq.POLLIN, func(e zmq.State) error { return Monitor(mon) })
-	monitor.Run(time.Second)
+	monitor.Run(200 * time.Millisecond)
 
 	/*
 		for {
