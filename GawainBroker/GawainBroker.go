@@ -12,8 +12,8 @@ const (
 	monPort = "5556"
 )
 
-func Monitor(state zmq.State) error {
-	fmt.Println("State: ", state)
+func Monitor(sock *zmq.Socket) error {
+	fmt.Println(sock.Recv(0))
 	return nil
 }
 
@@ -41,7 +41,7 @@ func main() {
 	}
 
 	monitor := zmq.NewReactor()
-	monitor.AddSocket(mon, zmq.POLLIN, Monitor)
+	monitor.AddSocket(mon, zmq.POLLIN, func(e zmq.State) error { return Monitor(mon) })
 	monitor.Run(time.Second)
 
 	/*

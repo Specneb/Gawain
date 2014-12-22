@@ -12,6 +12,7 @@ import (
 const (
 	brokerName = "riak.mail.tiscali.sys"
 	brokerPort = "5555"
+	brokerMon  = "5556"
 	keepalive  = 1000
 )
 
@@ -60,7 +61,7 @@ func main() {
 			fmt.Println(err)
 			continue
 		}
-		url := fmt.Sprintf("tcp://%s:%s", i, brokerPort)
+		url := fmt.Sprintf("tcp://%s:%s", i, brokerMon)
 		if errs := sock.Connect(url); errs != nil {
 			fmt.Println("Connect Error " + url)
 			sock.Close()
