@@ -2,6 +2,7 @@
 package main
 
 import (
+	nc "code.google.com/p/goncurses"
 	"fmt"
 	zmq "github.com/pebbe/zmq4"
 	"net"
@@ -21,6 +22,7 @@ var brokerList []string
 type broker struct {
 	mon    *zmq.Socket
 	sock   *zmq.Socket
+	id     int
 	ip     string
 	status bool
 }
@@ -63,7 +65,7 @@ func sendMsg(s *zmq.Socket, msg string) (retval string, err error) {
 
 func main() {
 	getBrokerList()
-	for _, i := range brokerList {
+	for ind, i := range brokerList {
 		sock, err := zmq.NewSocket(zmq.REQ)
 		if err != nil {
 			fmt.Println(err)
@@ -82,7 +84,7 @@ func main() {
 			fmt.Println(err)
 			continue
 		}
-		url = fmt.Sprintf("tcp://%s:%s", i, brokerMon)
+		url = fmt.Sprintf("tcp://%s:%s", ind, i, brokerMon)
 		if errs := mon.Connect(url); errs != nil {
 			fmt.Println("Connect Error " + url)
 			mon.Close()
@@ -90,7 +92,7 @@ func main() {
 		}
 		defer mon.Close()
 
-		brokers[i] = &broker{mon, sock, i, true}
+		brokers[i] = &broker{mon, sock, ind, i, true}
 
 		go monitor(brokers[i])
 	}
