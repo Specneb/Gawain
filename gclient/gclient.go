@@ -17,7 +17,15 @@ const (
 )
 
 var brokerList []string
-var brokers = make(map[*zmq.Socket]bool)
+
+type broker struct {
+	mon    *zmq.Socket
+	sock   *zmq.Socket
+	ip     string
+	status bool
+}
+
+var brokers = make(map[string]*broker)
 
 func getBrokerList() {
 	var err error
@@ -28,16 +36,16 @@ func getBrokerList() {
 	}
 }
 
-func monitor(s *zmq.Socket) {
+func monitor(s *broker) {
 	for {
 		time.Sleep(keepalive * time.Millisecond)
-		brokers[s] = false
-		ret, err := sendMsg(s, "PING")
+		s.status = false
+		ret, err := sendMsg(s.mon, "PING")
 		if err != nil {
 			fmt.Println("Recv Error: PING")
 			continue
 		}
-		brokers[s] = true
+		s.status = true
 		fmt.Println("OK: ", ret)
 	}
 }
@@ -61,22 +69,37 @@ func main() {
 			fmt.Println(err)
 			continue
 		}
-		url := fmt.Sprintf("tcp://%s:%s", i, brokerMon)
+		url := fmt.Sprintf("tcp://%s:%s", i, brokerPort)
 		if errs := sock.Connect(url); errs != nil {
 			fmt.Println("Connect Error " + url)
 			sock.Close()
 			continue
 		}
-		brokers[sock] = true
 		defer sock.Close()
-		go monitor(sock)
+
+		mon, err := zmq.NewSocket(zmq.REQ)
+		if err != nil {
+			fmt.Println(err)
+			continue
+		}
+		url = fmt.Sprintf("tcp://%s:%s", i, brokerMon)
+		if errs := mon.Connect(url); errs != nil {
+			fmt.Println("Connect Error " + url)
+			mon.Close()
+			continue
+		}
+		defer mon.Close()
+
+		brokers[i] = &broker{mon, sock, i, true}
+
+		go monitor(brokers[i])
 	}
 	fmt.Println(brokers)
 
 	for {
-		for sock, stat := range brokers {
-			if stat {
-				sendMsg(sock, "LOGLOG LOGLOG")
+		for ip, b := range brokers {
+			if b.status {
+				sendMsg(b.sock, "LOGLOG "+ip)
 				break
 			}
 		}
