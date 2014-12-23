@@ -15,6 +15,7 @@ const (
 func Monitor(sock *zmq.Socket, e zmq.State) error {
 	fmt.Println("mon... ", e)
 	fmt.Println(sock.Recv(0))
+	sock.Send("PONG", 0)
 	return nil
 }
 
@@ -44,6 +45,8 @@ func main() {
 	monitor := zmq.NewReactor()
 	monitor.AddSocket(mon, zmq.POLLIN, func(e zmq.State) error { return Monitor(mon, e) })
 	monitor.Run(200 * time.Millisecond)
+
+	fmt.Println("e adesso ?")
 
 	/*
 		for {
